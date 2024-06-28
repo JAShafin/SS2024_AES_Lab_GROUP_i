@@ -1,0 +1,95 @@
+#include <Wire.h>
+#include <LCD_I2C.h>
+#include <WiFiNINA.h>
+#include <PubSubClient.h>
+
+const char* ssid = "Shafin";  // Update with your WiFi SSID
+const char* password = "shafin123";  // Update with your WiFi password
+const char* mqtt_server = "172.20.10.5";  // Update with your MQTT broker IP address
+
+const char* mqtt_username = "jashafin";
+const char* mqtt_password = "jashafin786";
+
+WiFiClient wifiClient;
+PubSubClient client(wifiClient);
+LCD_I2C lcd(0x3F, 16, 2);  // Set the LCD address to 0x3F for a 16 chars and 2 line display
+
+void setup() {
+  Serial.begin(9600);
+  lcd.begin();  // Initialize the LCD
+  lcd.backlight();  // Turn on the backlight
+
+  setup_wifi();
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
+}
+
+void setup_wifi() {
+  delay(10);
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    WiFi.begin(ssid, password);
+
+    // Wait 10 seconds for connection
+    unsigned long startAttemptTime = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+      delay(100);
+    }
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("Connected to WiFi");
+    Serial.print("IP Address: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("Failed to connect to WiFi");
+  }
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  String message = "";
+  for (unsigned int i = 0; i < length; i++) {
+    message += (char)payload[i];
+  }
+  
+  Serial.print("Received message on topic: ");
+  Serial.println(topic);
+  Serial.print("Message: ");
+  Serial.println(message);
+  
+  if (String(topic) == "sensor/temperature") {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Temp: ");
+    lcd.print(message);  // Display the received message on LCD
+    Serial.print("Displaying temperature on LCD: ");
+    Serial.println(message);  // Debug statement for LCD display
+  }
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    if (client.connect("ArduinoClient2", mqtt_username, mqtt_password)) {
+      Serial.println("connected");
+      client.subscribe("sensor/temperature");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      delay(5000);
+    }
+  }
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+}
