@@ -1,0 +1,30 @@
+import paho.mqtt.client as mqtt
+
+# MQTT settings
+broker = "172.20.10.5"  # Replace with your MQTT broker IP
+port = 1883
+topic_temperature = "sensor/temperature"
+topic_weight = "sensor/weight"
+topic_notification = "sensor/notification"
+username = "jashafin"
+password = "jashafin786"
+
+# Callback when the client receives a message
+def on_message(client, userdata, msg):
+    print(f"Received message '{msg.payload.decode()}' on topic '{msg.topic}'")
+
+# Setup MQTT client
+client = mqtt.Client()
+client.username_pw_set(username, password)
+client.on_message = on_message
+
+# Connect to broker
+client.connect(broker, port, 60)
+
+# Subscribe to topics
+client.subscribe(topic_temperature)
+client.subscribe(topic_weight)
+client.subscribe(topic_notification)
+
+# Start the MQTT client
+client.loop_forever()
