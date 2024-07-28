@@ -1,0 +1,81 @@
+#include <DHT.h>
+#include <SPI.h>
+#include <WiFi.h>
+
+// DHT sensor settings
+#define DHTPIN 2        // Pin where the data pin of the sensor connected
+#define DHTTYPE DHT11   // (DHT11 for KY-015)
+
+DHT dht(DHTPIN, DHTTYPE);
+
+// WiFi settings
+const char* ssid     = "shafin";
+const char* password = "shafin123";
+const char* server = "http://192.168.1.100"; 
+
+void setup() {
+  Serial.begin(9600);
+  dht.begin();
+  
+  // Connect to WiFi
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("Connected to WiFi");
+}
+
+void loop() {
+  // Read temperature and humidity
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+  
+  // Print values to Serial Monitor
+  Serial.print("Humidity: ");
+  Serial.print(h);
+  Serial.print(" %\t");
+  Serial.print("Temperature: ");
+  Serial.print(t);
+  Serial.println(" *C ");
+  
+  // Send data to the web server
+  if (WiFi.status() == WL_CONNECTED) {
+    WiFiClient client;
+    if (client.connect(server, 80)) {
+      String postData = "humidity=" + String(h) + "&temperature=" + String(t);
+      
+      client.println("POST /sensor-data HTTP/1.1"); // Adjust the endpoint as necessary
+      client.println("Host: " + String(server));
+      client.println("Content-Type: application/x-www-form-urlencoded");
+      client.print("Content-Length: ");
+      client.println(postData.length());
+      client.println();
+      client.println(postData);
+      
+      // Wait for server response
+      while (client.connected()) {
+        String line = client.readStringUntil('\n');
+        if (line == "\r") {
+          break;
+        }
+      }
+      client.stop();
+      Serial.println("Data sent to server");
+    } else {
+      Serial.println("Connection to server failed");
+    }
+  }
+  
+  // Wait before reading again
+  delay(2000);
+}
