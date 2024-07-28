@@ -1,6 +1,9 @@
 # SS2024_AES_Lab_GROUP_i
-The lab and project of Advanced Embedded System Lab of group i
+Hello,
 
-In the branches, you can find the project smart grocery system. i uploded the final documentation and all the codes.
+This is about the lab and project of Advanced Embedded System Lab of group i
 
-Thank you.
+In the branches, you can find the project smart grocery system and lab exercises. I uploded the final documentation and all the codes of projects and lab exercises.
+
+Respectfully,
+Shafin
