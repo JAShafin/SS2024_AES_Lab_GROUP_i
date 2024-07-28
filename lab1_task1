@@ -1,32 +1,22 @@
 
 #include <SPI.h>
 #include <WiFiNINA.h>
+
 #include "arduino_secrets.h"
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
 char ssid[] = shafin;        
-char pass[] = shafin123;   
-int keyIndex = 0;               
+char pass[] = shafin123;    
+int keyIndex = 0;                
 
-int led =  LED_BUILTIN;
 int status = WL_IDLE_STATUS;
 
 WiFiServer server(80);
 
 void setup() {
 
-  //Initialize serial and wait for port to open:
+  Serial.begin(9600);      // initialize serial communication
 
-  Serial.begin(9600);
-
-  while (!Serial) {
-
-    ; // wait for serial port to connect. Needed for native USB port only
-
-  }
-
-  Serial.println("Access Point Web Server");
-
-  pinMode(led, OUTPUT);      // set the LED pin mode
+  pinMode(9, OUTPUT);      // set the LED pin mode
 
   // check for the WiFi module:
 
@@ -48,72 +38,30 @@ void setup() {
 
   }
 
-  // by default the local IP address of will be 192.168.4.1
+  // attempt to connect to Wifi network:
 
-  // you can override it with the following:
+  while (status != WL_CONNECTED) {
 
-  // WiFi.config(IPAddress(10, 0, 0, 1));
+    Serial.print("Attempting to connect to Network named: ");
 
-  // print the network name (SSID);
+    Serial.println(ssid);                   // print the network name (SSID);
 
-  Serial.print("Creating access point named: ");
+    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
 
-  Serial.println(ssid);
+    status = WiFi.begin(ssid, pass);
 
-  // Create open network. Change this line if you want to create an WEP network:
+    // wait 10 seconds for connection:
 
-  status = WiFi.beginAP(ssid, pass);
-
-  if (status != WL_AP_LISTENING) {
-
-    Serial.println("Creating access point failed");
-
-    // don't continue
-
-    while (true);
+    delay(10000);
 
   }
 
-  // wait 10 seconds for connection:
+  server.begin();                           // start the web server on port 80
 
-  delay(10000);
-
-  // start the web server on port 80
-
-  server.begin();
-
-  // you're connected now, so print out the status
-
-  printWiFiStatus();
+  printWifiStatus();                        // you're connected now, so print out the status
 }
 
 void loop() {
-
-  // compare the previous status to the current status
-
-  if (status != WiFi.status()) {
-
-    // it has changed update the variable
-
-    status = WiFi.status();
-
-    if (status == WL_AP_CONNECTED) {
-
-      // a device has connected to the AP
-
-      Serial.println("Device connected to AP");
-
-    } else {
-
-      // a device has disconnected from the AP, and we are back in listening mode
-
-      Serial.println("Device disconnected from AP");
-
-    }
-
-  }
-
-
 
   WiFiClient client = server.available();   // listen for incoming clients
 
@@ -151,9 +99,9 @@ void loop() {
 
             // the content of the HTTP response follows the header:
 
-            client.print("Click <a href=\"/H\">here</a> turn the LED on<br>");
+            client.print("Click <a href=\"/H\">here</a> turn the LED on pin 9 on<br>");
 
-            client.print("Click <a href=\"/L\">here</a> turn the LED off<br>");
+            client.print("Click <a href=\"/L\">here</a> turn the LED on pin 9 off<br>");
 
             // The HTTP response ends with another blank line:
 
@@ -163,17 +111,13 @@ void loop() {
 
             break;
 
-          }
-
-          else {      // if you got a newline, then clear currentLine:
+          } else {    // if you got a newline, then clear currentLine:
 
             currentLine = "";
 
           }
 
-        }
-
-        else if (c != '\r') {    // if you got anything else but a carriage return character,
+        } else if (c != '\r') {  // if you got anything else but a carriage return character,
 
           currentLine += c;      // add it to the end of the currentLine
 
@@ -183,13 +127,13 @@ void loop() {
 
         if (currentLine.endsWith("GET /H")) {
 
-          digitalWrite(led, HIGH);               // GET /H turns the LED on
+          digitalWrite(9, HIGH);               // GET /H turns the LED on
 
         }
 
         if (currentLine.endsWith("GET /L")) {
 
-          digitalWrite(led, LOW);                // GET /L turns the LED off
+          digitalWrite(9, LOW);                // GET /L turns the LED off
 
         }
 
@@ -206,7 +150,7 @@ void loop() {
   }
 }
 
-void printWiFiStatus() {
+void printWifiStatus() {
 
   // print the SSID of the network you're attached to:
 
@@ -214,7 +158,7 @@ void printWiFiStatus() {
 
   Serial.println(WiFi.SSID());
 
-  // print your WiFi shield's IP address:
+  // print your board's IP address:
 
   IPAddress ip = WiFi.localIP();
 
@@ -222,10 +166,19 @@ void printWiFiStatus() {
 
   Serial.println(ip);
 
+  // print the received signal strength:
+
+  long rssi = WiFi.RSSI();
+
+  Serial.print("signal strength (RSSI):");
+
+  Serial.print(rssi);
+
+  Serial.println(" dBm");
+
   // print where to go in a browser:
 
   Serial.print("To see this page in action, open a browser to http://");
 
   Serial.println(ip);
-
 }
