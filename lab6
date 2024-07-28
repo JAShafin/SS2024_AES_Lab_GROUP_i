@@ -1,14 +1,12 @@
 # aio_led_button.py
-#
+
 # Description:
 # Interfaces an LED and a button with the Adafruit IO service.
-#
+
 # Circuit:
 # Red LED connected to BCM pin 21, physical pin 40.
 # Momentary push button connected to BCM pin 5, physical pin 29.
-#
-# Created by John Woolsey on 05/24/2019.
-# Copyright (c) 2019 Woolsey Workshop.  All rights reserved.
+
 
 
 # Libraries
